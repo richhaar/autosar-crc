@@ -40,6 +40,17 @@ console.log(autocrc.crc64('123456789'));
 node example.js 
 ```
 
+You should get the following result:
+
+```
+75
+223
+10673
+3421780262
+379048042
+11051210869376104000
+```
+
 The polynomials of the CRC match the spec given in the AUTOSAR standard, see `crc_tables.h` for specifics on the polynomials.
 
 Each CRC accepts the following types:
@@ -57,6 +68,14 @@ console.log(autocrc.crc8(arr));
 console.log(autocrc.crc8(arr.buffer));
 console.log(autocrc.crc8('123456789'))
 
+```
+
+Should give you the following result (0x31 is hex for 1):
+
+```
+75
+75
+75
 ```
 
 ## Running the tests
