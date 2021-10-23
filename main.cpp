@@ -1,9 +1,10 @@
 #include <string_view>
 #include <iostream>
-
-#include <napi.h>
-
 #include "crc_tables.h"
+
+#include <chrono>
+#include <limits>
+#include <type_traits>
 
 // crc8_SAE_J1850
 uint8_t crc8(std::string_view s) {
@@ -17,7 +18,7 @@ uint8_t crc8(std::string_view s) {
 }
 
 // crc8_h2f
-uint8_t crc8_h2f(std::string_view s) {
+uint8_t crc8H2F(std::string_view s) {
        uint8_t crc = 0xFF;
 
        for (uint8_t const& ch : s) {
@@ -39,42 +40,23 @@ uint16_t crc16(std::string_view s) {
        return crc;
 }
 
-
-              /*****************************************************************/
-              /*                                                               */
-              /* CRC LOOKUP TABLE                                              */
-              /* ================                                              */
-              /* The following CRC lookup table was generated automagically    */
-              /* by the Rocksoft^tm Model CRC Algorithm Table Generation       */
-              /* Program V1.0 using the following model parameters:            */
-              /*                                                               */
-              /*    Width   : 4 bytes.                                         */
-              /*    Poly    : 0xF4ACFB13L                                      */
-              /*    Reverse : TRUE.                                            */
-              /*                                                               */
-              /* For more information on the Rocksoft^tm Model CRC Algorithm,  */
-              /* see the document titled "A Painless Guide to CRC Error        */
-              /* Detection Algorithms" by Ross Williams                        */
-              /* (ross@guest.adelaide.edu.au.). This document is likely to be  */
-              /* in the FTP archive "ftp.adelaide.edu.au/pub/rocksoft".        */
-
-uint32_t crc32p4(std::string_view s) {
-
-       uint32_t crc = 0xFFFFFFFF;
-
-       for (uint32_t const& ch : s) {
-              crc = tables::crc32_F4ACFB13[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
-       }
-
-       return ~crc;
-}
-
 uint32_t crc32(std::string_view s) {
 
        uint32_t crc = 0xFFFFFFFF;
 
        for (uint32_t const& ch : s) {
               crc = tables::crc32_ethernet[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
+       }
+
+       return ~crc;
+}
+
+uint32_t crc32P4(std::string_view s) {
+
+       uint32_t crc = 0xFFFFFFFF;
+
+       for (uint32_t const& ch : s) {
+              crc = tables::crc32_F4ACFB13[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
        }
 
        return ~crc;
@@ -91,8 +73,92 @@ uint64_t crc64(std::string_view s) {
        return ~crc;
 }
 
+template<typename T>
+typename std::remove_all_extents<T>::type
+       crc_reflected(std::string_view s, T const* const crc_table)
+{
+       using Tlocal = typename std::remove_all_extents<T>::type;
+       Tlocal crc =  std::numeric_limits<Tlocal>::max();
+
+       for (Tlocal const& ch : s) {
+              crc = crc_table[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
+       }
+
+       return ~crc;  
+}
+
+
 int main()
 {
+       using namespace std::literals;
+       std::cout << "main" << std::endl;
+       std::cout << (crc32P4("\x00\x00\x00\x00"sv) == 0x6FB32240) << std::endl;
+       std::cout << (crc32P4("123456789") == 0x1697D06A) << std::endl;
+
+       std::cout << (crc_reflected("123456789", tables::crc32_ethernet) == 0xCBF43926) << std::endl;
+       std::cout << (crc64("123456789") == 0x995DC9BBDF1939FA) << std::endl;
+
+       std::cout << (crc16("123456789") == 0x29B1) << std::endl;
+
+       std::cout << (crc8("123456789") == 0x4B) << std::endl;
+       std::cout << (crc8("\x00\x00\x00\x00"sv) == 0x59) << std::endl;
+
+       std::cout << (crc8H2F("123456789") == 0xDF) << std::endl;
+
+       //std::cout << crc_reflected<decltype(tables::crc64_ECMA)>("123456789", &tables::crc64_ECMA) << std::endl;
+       std::cout << crc_reflected("123456789", tables::crc64_ECMA) << std::endl;
+       std::cout << crc64("123456789") << std::endl;
+
+
+      /* int64_t total = 0;
+
+       auto const t0 = std::chrono::high_resolution_clock::now();
+       for(int i=0; i<200'000; ++i)
+       {
+              total += crc64("123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789");
+
+       }
+
+
+       auto const t1 = std::chrono::high_resolution_clock::now();
+
+       for(int i=0; i<200'000; ++i)
+       {
+              total += crcTptr<uint64_t>("123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789", tables::crc64_ECMA);
+
+       }
+
+       auto const t2 = std::chrono::high_resolution_clock::now();
+
+
+
+       for(int i=0; i<200'000; ++i)
+       {
+              total += crc_reflected<uint64_t>("123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789", tables::crc64_ECMA);
+
+              
+
+       }
+
+       auto const t3 = std::chrono::high_resolution_clock::now();
+
+       auto const ms = std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0);
+       auto const ms2 = std::chrono::duration_cast<std::chrono::nanoseconds>(t2-t1);
+       auto const ms3 = std::chrono::duration_cast<std::chrono::nanoseconds>(t3-t2);
+
+       std::cout << "total " << total << std::endl;
+       std::cout << ms.count() << " vs " << ms2.count() << " vs " << ms3.count() << std::endl;*/
+
+
+}
+
+
+/*#include <napi.h>
+
+
+Napi::Value Add(const Napi::CallbackInfo& info) {
+     Napi::Env env = info.Env();
+
        using namespace std::literals;
        std::cout << "main" << std::endl;
        std::cout << (crc32p4("\x00\x00\x00\x00"sv) == 0x6FB32240) << std::endl;
@@ -108,27 +174,11 @@ int main()
 
        std::cout << (crc8_h2f("123456789") == 0xDF) << std::endl;
 
-}
-
-
-
-Napi::Value Add(const Napi::CallbackInfo& info) {
-     Napi::Env env = info.Env();
-
-  /*if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Wrong number of arguments")
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  if (!info[0].IsNumber() || !info[1].IsNumber()) {
-    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
-    return env.Null();
-  }
-
-  double arg0 = info[0].As<Napi::Number>().DoubleValue();
-  double arg1 = info[1].As<Napi::Number>().DoubleValue();
-  Napi::Number num = Napi::Number::New(env, arg0 + arg1);*/
+         if (info.Length() !=  1) {
+           Napi::TypeError::New(env, "Wrong number of arguments")
+               .ThrowAsJavaScriptException();
+           return env.Null();
+         }
 
      if(info[0].IsString()) {
             Napi::String str = info[0].As<Napi::String>();
@@ -158,3 +208,4 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 }
 
 NODE_API_MODULE(crc_addon, Init)
+*/
