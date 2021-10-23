@@ -1,3 +1,5 @@
+#include <cstdint>
+
 namespace tables {
 	/**
 		CRC result width: 8 bits

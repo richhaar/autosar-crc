@@ -1,35 +1,31 @@
-#include <string_view>
-#include <iostream>
 #include "crc_tables.h"
+#include <napi.h>
 
-#include <chrono>
+#include <functional>
 #include <limits>
+#include <string_view>
 #include <type_traits>
 
-// crc8_SAE_J1850
-uint8_t crc8(std::string_view s) {
+#include <iostream>
+#include <chrono>
+
+
+using namespace std::placeholders;
+
+/**
+       Normal crc 8 bit and 16 bit table based calculation
+*/
+uint8_t crc8(std::string_view const s, uint8_t const* const table) {
        uint8_t crc = 0xFF;
 
        for (uint8_t const& ch : s) {
-              crc = tables::crc8_SAE_J1850[ch ^ crc];
+              crc = table[ch ^ crc];
        }
 
        return ~crc;
 }
 
-// crc8_h2f
-uint8_t crc8H2F(std::string_view s) {
-       uint8_t crc = 0xFF;
-
-       for (uint8_t const& ch : s) {
-              crc = tables::crc8_h2f[ch ^ crc];
-       }
-
-       return ~crc;
-}
-
-// 16-bit CCITT-FALSE CRC16
-uint16_t crc16(std::string_view s) {
+uint16_t crc16(std::string_view const s) {
 
        uint16_t crc = 0xFFFF;
 
@@ -40,74 +36,45 @@ uint16_t crc16(std::string_view s) {
        return crc;
 }
 
-uint32_t crc32(std::string_view s) {
-
-       uint32_t crc = 0xFFFFFFFF;
-
-       for (uint32_t const& ch : s) {
-              crc = tables::crc32_ethernet[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
-       }
-
-       return ~crc;
-}
-
-uint32_t crc32P4(std::string_view s) {
-
-       uint32_t crc = 0xFFFFFFFF;
-
-       for (uint32_t const& ch : s) {
-              crc = tables::crc32_F4ACFB13[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
-       }
-
-       return ~crc;
-}
-
-uint64_t crc64(std::string_view s) {
-
-       uint64_t crc =  0xFFFFFFFFFFFFFFFF;
-
-       for (uint64_t const& ch : s) {
-              crc = tables::crc64_ECMA[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
-       }
-
-       return ~crc;
-}
-
+/**
+       Reflected crc table based calculation
+*/
 template<typename T>
-typename std::remove_all_extents<T>::type
-       crc_reflected(std::string_view s, T const* const crc_table)
+typename std::remove_all_extents<T>::type crc_reflected(std::string_view const s, T const* const crc_table)
 {
-       using Tlocal = typename std::remove_all_extents<T>::type;
-       Tlocal crc =  std::numeric_limits<Tlocal>::max();
+       using itemT = typename std::remove_all_extents<T>::type;
+       
+       itemT crc =  std::numeric_limits<itemT>::max();
 
-       for (Tlocal const& ch : s) {
+       for (itemT const& ch : s) {
               crc = crc_table[(crc ^ ch) & 0xFFU] ^ (crc >> 8U);
        }
 
        return ~crc;  
 }
 
-
 int main()
 {
        using namespace std::literals;
+
+       
        std::cout << "main" << std::endl;
-       std::cout << (crc32P4("\x00\x00\x00\x00"sv) == 0x6FB32240) << std::endl;
-       std::cout << (crc32P4("123456789") == 0x1697D06A) << std::endl;
+       std::cout << (crc_reflected("\x00\x00\x00\x00"sv, tables::crc32_F4ACFB13) == 0x6FB32240) << std::endl;
+       std::cout << (crc_reflected("123456789"sv, tables::crc32_F4ACFB13) == 0x1697D06A) << std::endl;
 
        std::cout << (crc_reflected("123456789", tables::crc32_ethernet) == 0xCBF43926) << std::endl;
-       std::cout << (crc64("123456789") == 0x995DC9BBDF1939FA) << std::endl;
+       std::cout << (crc_reflected("123456789", tables::crc64_ECMA) == 0x995DC9BBDF1939FA) << std::endl;
 
        std::cout << (crc16("123456789") == 0x29B1) << std::endl;
 
-       std::cout << (crc8("123456789") == 0x4B) << std::endl;
-       std::cout << (crc8("\x00\x00\x00\x00"sv) == 0x59) << std::endl;
+       std::cout << (crc8("123456789", tables::crc8_SAE_J1850) == 0x4B) << std::endl;
+       std::cout << (crc8("\x00\x00\x00\x00"sv, tables::crc8_SAE_J1850) == 0x59) << std::endl;
 
-       std::cout << (crc8H2F("123456789") == 0xDF) << std::endl;
+       std::cout << (crc8("123456789", tables::crc8_h2f) == 0xDF) << std::endl;
 
        //std::cout << crc_reflected<decltype(tables::crc64_ECMA)>("123456789", &tables::crc64_ECMA) << std::endl;
        std::cout << crc_reflected("123456789", tables::crc64_ECMA) << std::endl;
-       std::cout << crc64("123456789") << std::endl;
+       //std::cout << crc64("123456789") << std::endl;
 
 
       /* int64_t total = 0;
@@ -148,64 +115,78 @@ int main()
 
        std::cout << "total " << total << std::endl;
        std::cout << ms.count() << " vs " << ms2.count() << " vs " << ms3.count() << std::endl;*/
-
-
 }
 
+template<typename f>
+Napi::Value CallCRC(Napi::CallbackInfo const& info, f func) {
+  Napi::Env env = info.Env();
 
-/*#include <napi.h>
+  if (info.Length() !=  1) {
+   Napi::TypeError::New(env, "Expected one argument.")
+   .ThrowAsJavaScriptException();
+   return env.Null();
+}  
 
+std::string_view sv{};
 
-Napi::Value Add(const Napi::CallbackInfo& info) {
-     Napi::Env env = info.Env();
+if(info[0].IsString()) {
+       Napi::String str = info[0].As<Napi::String>();
+       sv = str.Utf8Value();
+} else if(info[0].IsTypedArray()) {
+       Napi::TypedArray const arr = info[0].As<Napi::TypedArray>();
+       Napi::ArrayBuffer buf = arr.ArrayBuffer();
+       sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
+} else if(info[0].IsArrayBuffer()) {
+       Napi::ArrayBuffer buf = info[0].As<Napi::ArrayBuffer>();
+       sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
+} else {
+       Napi::TypeError::New(env, "Expected String, TypedArray or ArrayBuffer.")
+       .ThrowAsJavaScriptException();
+       return env.Null();
+}
 
-       using namespace std::literals;
-       std::cout << "main" << std::endl;
-       std::cout << (crc32p4("\x00\x00\x00\x00"sv) == 0x6FB32240) << std::endl;
-       std::cout << (crc32p4("123456789") == 0x1697D06A) << std::endl;
+return Napi::Number::New(env, func(sv));
+}
 
-       std::cout << (crc32("123456789") == 0xCBF43926) << std::endl;
-       std::cout << (crc64("123456789") == 0x995DC9BBDF1939FA) << std::endl;
+Napi::Value call_crc8_SAE_J1850(Napi::CallbackInfo const& info)
+{
+       return CallCRC(info, std::bind(crc8, _1, tables::crc8_SAE_J1850));
+}
 
-       std::cout << (crc16("123456789") == 0x29B1) << std::endl;
+Napi::Value call_crc8_h2f(Napi::CallbackInfo const& info)
+{
+       return CallCRC(info, std::bind(crc8, _1, tables::crc8_h2f));
+}
 
-       std::cout << (crc8("123456789") == 0x4B) << std::endl;
-       std::cout << (crc8("\x00\x00\x00\x00"sv) == 0x59) << std::endl;
+Napi::Value call_crc16_CCITT_FALSE(Napi::CallbackInfo const& info)
+{
+       return CallCRC(info, crc16);
+}
 
-       std::cout << (crc8_h2f("123456789") == 0xDF) << std::endl;
+Napi::Value call_crc32_ethernet(Napi::CallbackInfo const& info)
+{
+       return CallCRC(info, std::bind(crc_reflected<uint32_t>, _1, tables::crc32_ethernet));
+}
 
-         if (info.Length() !=  1) {
-           Napi::TypeError::New(env, "Wrong number of arguments")
-               .ThrowAsJavaScriptException();
-           return env.Null();
-         }
+Napi::Value call_crc32_F4ACFB13(Napi::CallbackInfo const& info)
+{
+       return CallCRC(info, std::bind(crc_reflected<uint32_t>, _1, tables::crc32_F4ACFB13));
+}
 
-     if(info[0].IsString()) {
-            Napi::String str = info[0].As<Napi::String>();
-  //auto const sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
-
-            return Napi::Number::New(env, crc8(str.Utf8Value()));
-
-
-     } else if(info[0].IsTypedArray()) {
-          Napi::TypedArray const arr = info[0].As<Napi::TypedArray>();
-          Napi::ArrayBuffer buf = arr.ArrayBuffer();
-
-          auto const sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
-          return Napi::Number::New(env, crc8(sv));
-   }
-   Napi::ArrayBuffer buf = info[0].As<Napi::ArrayBuffer>();
-   auto const sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
-
-   return Napi::Number::New(env, crc8(sv));
-
-  //return num;
+Napi::Value call_crc64_ECMA(Napi::CallbackInfo const& info)
+{
+       return CallCRC(info, std::bind(crc_reflected<uint64_t>, _1, tables::crc64_ECMA));
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-     exports.Set(Napi::String::New(env, "crc8"), Napi::Function::New(env, Add));
-     return exports;
+       exports.Set(Napi::String::New(env, "crc8"), Napi::Function::New(env, call_crc8_SAE_J1850));
+       exports.Set(Napi::String::New(env, "crc8_h2f"), Napi::Function::New(env, call_crc8_h2f));
+       exports.Set(Napi::String::New(env, "crc16"), Napi::Function::New(env, call_crc16_CCITT_FALSE));
+       exports.Set(Napi::String::New(env, "crc32"), Napi::Function::New(env, call_crc32_ethernet));
+       exports.Set(Napi::String::New(env, "crc32_p4"), Napi::Function::New(env, call_crc32_F4ACFB13));
+       exports.Set(Napi::String::New(env, "crc64"), Napi::Function::New(env, call_crc64_ECMA));
+
+       return exports;
 }
 
 NODE_API_MODULE(crc_addon, Init)
-*/
