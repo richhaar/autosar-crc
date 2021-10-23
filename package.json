@@ -1,6 +1,6 @@
 {
   "name": "autosar-crc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "8,16,32,64 bit crc algorithms as defined by the AUTOSAR standard",
   "main": "./src/index.js",
   "scripts": {
