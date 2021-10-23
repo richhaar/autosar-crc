@@ -113,7 +113,7 @@ npm test
 
 ## License
 
-This project is licensed under the ISC License - see the [LICENSE.md](LICENSE) file for details
+This project is licensed under the ISC License - see the [LICENSE](https://github.com/richhaar/autosar-crc/blob/main/LICENSE) file for details
 
 ## Acknowledgments
 
