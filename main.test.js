@@ -71,13 +71,27 @@ test('crc32_p4 check matches AUTOSAR table', () => {
 });
 
 test('crc64 check matches AUTOSAR table', () => {
-  expect(functions.crc32_p4(row_1)).toBe(0x6FB32240);
-  expect(functions.crc32_p4(row_2)).toBe(0x4F721A25);
-  expect(functions.crc32_p4(row_3)).toBe(0x20662DF8);
-  expect(functions.crc32_p4(row_4)).toBe(0x9BD7996E);
-  expect(functions.crc32_p4(row_5)).toBe(0xA65A343D);
-  expect(functions.crc32_p4(row_6)).toBe(0xEE688A78);
-  expect(functions.crc32_p4(row_7)).toBe(0xFFFFFFFF);
+  expect(functions.crc64(row_1)).toBe(0xF4A586351E1B9F4B);
+  expect(functions.crc64(row_2)).toBe(0x319C27668164F1C6);
+  expect(functions.crc64(row_3)).toBe(0x54C5D0F7667C1575);
+  expect(functions.crc64(row_4)).toBe(0xA63822BE7E0704E6);
+  expect(functions.crc64(row_5)).toBe(0x701ECEB219A8E5D5);
+  expect(functions.crc64(row_6)).toBe(0x5FAA96A9B59F3E4E);
+  expect(functions.crc64(row_7)).toBe(0xFFFFFFFF00000000);
 
-  expect(functions.crc32_p4(check_str)).toBe(0x1697D06A);
+  expect(functions.crc64(check_str)).toBe(0x995DC9BBDF1939FA);
+});
+
+test('crc accepts string', () => {
+	expect(functions.crc64('123456789')).toBe(0x995DC9BBDF1939FA);
+});
+
+test('crc accepts ArrayBuffer', () => {
+	const buf = new Uint8Array([0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39]).buffer;
+	expect(functions.crc64(buf)).toBe(0x995DC9BBDF1939FA);
+});
+
+test('crc accepts TypedArray', () => {
+	const arr = new Uint8Array([0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39]);
+	expect(functions.crc64(arr)).toBe(0x995DC9BBDF1939FA);
 });
