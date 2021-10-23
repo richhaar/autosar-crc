@@ -16,5 +16,13 @@
   },
   "devDependencies": {
     "jest": "^27.3.1"
-  }
+  },
+  "keywords": [
+    "autosar",
+    "crc",
+    "crc8",
+    "crc16",
+    "crc32",
+    "crc64"
+  ]
 }
