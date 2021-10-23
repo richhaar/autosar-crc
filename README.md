@@ -8,7 +8,7 @@ These instructions will get you up and running using the autosar-crc node module
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+To get going you need the following installed:
 
 * NodeJS
 * npm
