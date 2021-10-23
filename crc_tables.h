@@ -9,7 +9,7 @@ namespace tables {
 		Result data reflected: No
 		XOR value: 0xFF
 		Check: 0x4B
-		Magic check: 0xC4h
+		Magic check: 0xC4
 	*/
 	uint8_t constexpr crc8_SAE_J1850[256] =
 	{
@@ -68,7 +68,7 @@ namespace tables {
 		Input data reflected: No
 		Result data reflected: No
 		XOR value: 0x0000
-		Check:29B1h
+		Check: 0x29B1
 		Magic check: 0x0000
 	*/
 	uint16_t constexpr crc16_CCITT_FALSE[256] =
