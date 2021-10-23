@@ -319,7 +319,7 @@ uint64_t crc64(std::string_view s) {
 Napi::Value Add(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
-  if (info.Length() < 2) {
+  /*if (info.Length() < 2) {
     Napi::TypeError::New(env, "Wrong number of arguments")
         .ThrowAsJavaScriptException();
     return env.Null();
@@ -332,9 +332,28 @@ Napi::Value Add(const Napi::CallbackInfo& info) {
 
   double arg0 = info[0].As<Napi::Number>().DoubleValue();
   double arg1 = info[1].As<Napi::Number>().DoubleValue();
-  Napi::Number num = Napi::Number::New(env, arg0 + arg1);
+  Napi::Number num = Napi::Number::New(env, arg0 + arg1);*/
 
-  return num;
+if(info[0].IsString()) {
+  Napi::String str = info[0].As<Napi::String>();
+  //auto const sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
+
+  return Napi::Number::New(env, crc8(str.Utf8Value()));
+
+
+} else if(info[0].IsTypedArray()) {
+    Napi::TypedArray const arr = info[0].As<Napi::TypedArray>();
+    Napi::ArrayBuffer buf = arr.ArrayBuffer();
+
+    auto const sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
+    return Napi::Number::New(env, crc8(sv));
+}
+  Napi::ArrayBuffer buf = info[0].As<Napi::ArrayBuffer>();
+  auto const sv = std::string_view(reinterpret_cast<const char*>(buf.Data()), buf.ByteLength());
+
+  return Napi::Number::New(env, crc8(sv));
+
+  //return num;
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
