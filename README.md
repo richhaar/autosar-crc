@@ -78,6 +78,16 @@ Should give you the following result (note: 0x31 is hex for 1):
 75
 ```
 
+## Benchmarks
+
+Running crc32 over the entire works of Shakespeare 100x on a MacBook Air gives the following:
+
+```
+autosar-crc: 2.442s
+crc: 3.293s
+crc32: 56.973s
+```
+
 ## Running the tests
 
 The tests are found in the `main.test.js` file and are run with `Jest`.
@@ -103,7 +113,7 @@ npm test
 
 ## License
 
-This project is licensed under the ISC License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the ISC License - see the [LICENSE.md](LICENSE) file for details
 
 ## Acknowledgments
 
