@@ -1,4 +1,4 @@
-const functions = require('./build/Release/crc_addon.node'); 
+const functions = require('./index.js'); 
 
 const row_1 = new Uint8Array([0x00, 0x00, 0x00, 0x00]);
 const row_2 = new Uint8Array([0xF2, 0x01, 0x83]);

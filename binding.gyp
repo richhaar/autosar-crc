@@ -4,7 +4,7 @@
       "target_name": "crc_addon",
       "cflags!": [ "-fno-exceptions" ],
       "cflags_cc!": [ "-fno-exceptions", "-std=c++17", "-Ofast" ],
-      "sources": [ "main.cpp" ],
+      "sources": [ "./src/main.cpp" ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
       ],

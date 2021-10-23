@@ -2,14 +2,14 @@
   "name": "autosar-crc",
   "version": "1.0.0",
   "description": "8,16,32,64 bit crc algorithms as defined by the AUTOSAR standard",
-  "main": "./build/addon/crc_addon.node",
+  "main": "./src/index.js",
   "scripts": {
     "test": "jest",
     "install": "node-gyp rebuild"
   },
   "author": "Richard Haar",
   "license": "ISC",
-  "repository": "github:richhaar/AUTOSAR-CRC",
+  "repository": "github:richhaar/autosar-crc",
   "gypfile": true,
   "dependencies": {
     "node-addon-api": "^4.2.0"
