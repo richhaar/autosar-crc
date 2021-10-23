@@ -70,7 +70,7 @@ console.log(autocrc.crc8('123456789'))
 
 ```
 
-Should give you the following result (0x31 is hex for 1):
+Should give you the following result (note: 0x31 is hex for 1):
 
 ```
 75
