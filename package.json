@@ -9,6 +9,7 @@
   },
   "author": "Richard Haar",
   "license": "ISC",
+  "repository": "github:richhaar/AUTOSAR-CRC",
   "gypfile": true,
   "dependencies": {
     "node-addon-api": "^4.2.0"
