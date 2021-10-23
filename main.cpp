@@ -9,8 +9,8 @@
 using namespace std::placeholders;
 
 /**
-  Normal crc 8 bit and 16 bit table based calculation
-  */
+    Normal crc 8 bit and 16 bit table based calculation
+*/
 uint8_t crc8(std::string_view const s, uint8_t const* const table) {
     uint8_t crc = 0xFF;
 
@@ -34,8 +34,8 @@ uint16_t crc16(std::string_view const s) {
 
 /**
   Reflected crc table based calculation
-  */
-    template<typename T>
+*/
+template<typename T>
 typename std::remove_all_extents<T>::type crc_reflected(std::string_view const s, T const* const crc_table)
 {
     using itemT = typename std::remove_all_extents<T>::type;
