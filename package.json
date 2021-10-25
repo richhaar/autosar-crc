@@ -1,6 +1,6 @@
 {
   "name": "autosar-crc",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "8,16,32,64 bit crc algorithms as defined by the AUTOSAR standard",
   "main": "./src/index.js",
   "scripts": {
@@ -11,11 +11,9 @@
   "license": "ISC",
   "repository": "github:richhaar/autosar-crc",
   "gypfile": true,
-  "dependencies": {
-    "node-addon-api": "^4.2.0"
-  },
   "devDependencies": {
-    "jest": "^27.3.1"
+    "jest": "^27.3.1",
+    "node-addon-api": "^4.2.0"
   },
   "keywords": [
     "autosar",
