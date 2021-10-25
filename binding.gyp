@@ -9,9 +9,11 @@
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
       "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
-
       "xcode_settings": {
           "OTHER_CFLAGS": [ "-std=c++17", "-Ofast" ],
+      },
+      "msvs_settings": {
+          "VCCLCompilerTool": { "AdditionalOptions": [ "-std:c++17", "-O2", "-GL", "-Ot" ] }
       },
     }
   ]
