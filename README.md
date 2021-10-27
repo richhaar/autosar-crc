@@ -12,6 +12,7 @@ To get going you need the following installed:
 
 * NodeJS
 * npm
+* c++17 compiler
 
 ### Installing
 
